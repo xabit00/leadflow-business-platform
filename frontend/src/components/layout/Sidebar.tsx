@@ -31,9 +31,9 @@ const sections: { title: string; items: NavItem[] }[] = [
   {
     title: 'Lead Operations',
     items: [
-      { label: 'Lead Intake', icon: Zap },
-      { label: 'SLA & Escalation', icon: Clock },
-      { label: 'Recovery Queue', icon: LifeBuoy },
+      { label: 'Lead Intake', icon: Zap, to: '/lead-intake' },
+      { label: 'SLA & Escalation', icon: Clock, to: '/sla-escalation' },
+      { label: 'Recovery Queue', icon: LifeBuoy, to: '/recovery-queue' },
     ],
   },
   {
@@ -102,9 +102,9 @@ export const Sidebar: React.FC = () => (
     </div>
 
     <div className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-      <p className="font-medium text-slate-300">Step 2 — CRM Live</p>
+      <p className="font-medium text-slate-300">Step 3 — Lead Engine Live</p>
       <p className="text-[11px] mt-1 text-slate-400">
-        Contacts, Companies &amp; Opportunities are active. Lead Engine coming in Step 3.
+        Contacts, Companies, Opportunities &amp; Lead Engine are active.
       </p>
     </div>
   </aside>

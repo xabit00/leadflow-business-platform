@@ -8,6 +8,9 @@ import { SignupPage } from '../pages/auth/SignupPage';
 import { ContactsPage } from '../pages/crm/ContactsPage';
 import { CompaniesPage } from '../pages/crm/CompaniesPage';
 import { OpportunitiesPage } from '../pages/crm/OpportunitiesPage';
+import { LeadIntakePage } from '../pages/leads/LeadIntakePage';
+import { SlaEscalationPage } from '../pages/leads/SlaEscalationPage';
+import { RecoveryQueuePage } from '../pages/leads/RecoveryQueuePage';
 
 export const AppRoutes = () => (
   <Routes>
@@ -20,6 +23,10 @@ export const AppRoutes = () => (
         <Route path='contacts' element={<ContactsPage />} />
         <Route path='companies' element={<CompaniesPage />} />
         <Route path='opportunities' element={<OpportunitiesPage />} />
+        {/* Lead Engine — Step 3 live */}
+        <Route path='lead-intake' element={<LeadIntakePage />} />
+        <Route path='sla-escalation' element={<SlaEscalationPage />} />
+        <Route path='recovery-queue' element={<RecoveryQueuePage />} />
         <Route path='*' element={<NotFoundPage />} />
       </Route>
     </Route>
