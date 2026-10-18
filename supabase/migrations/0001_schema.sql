@@ -1,101 +1,23 @@
--- ============================================================================
--- 0001_schema.sql: Core Schema & Enums for LeadFlow
--- ============================================================================
-
--- 1. Extensions
+-- 1. Extension
 create extension if not exists pgcrypto;
 
--- 2. Custom Enumeration Types (Order and labels strictly enforced)
-create type user_level as enum (
-  'owner',
-  'admin',
-  'user'
-);
+-- 2. Enums (exact labels in this order)
+create type user_level as enum ('owner','admin','user');
+create type user_status as enum ('available','busy','on_leave','offline');
+create type lead_source as enum ('web_form','message','manual');
+create type lead_status as enum ('new','acknowledged','closed');
+create type assignment_reason as enum ('initial','escalation','reassign_absence','manual');
+create type ack_leave_policy as enum ('keep','reassign');
+create type custom_field_entity as enum ('contact','opportunity');
+create type custom_field_type as enum ('text','number','date','dropdown','checkbox');
+create type integration_status as enum ('not_connected','connected','error');
+create type integration_direction as enum ('inbound','outbound');
+create type message_direction as enum ('inbound','outbound');
+create type message_status as enum ('queued','sent','delivered','failed');
+create type payment_status as enum ('pending','paid','failed','expired','refunded');
+create type outbox_status as enum ('pending','sent','failed');
 
-create type user_status as enum (
-  'available',
-  'busy',
-  'on_leave',
-  'offline'
-);
-
-create type lead_source as enum (
-  'web_form',
-  'message',
-  'manual'
-);
-
-create type lead_status as enum (
-  'new',
-  'acknowledged',
-  'closed'
-);
-
-create type assignment_reason as enum (
-  'initial',
-  'escalation',
-  'reassign_absence',
-  'manual'
-);
-
-create type ack_leave_policy as enum (
-  'keep',
-  'reassign'
-);
-
-create type custom_field_entity as enum (
-  'contact',
-  'opportunity'
-);
-
-create type custom_field_type as enum (
-  'text',
-  'number',
-  'date',
-  'dropdown',
-  'checkbox'
-);
-
-create type integration_status as enum (
-  'not_connected',
-  'connected',
-  'error'
-);
-
-create type integration_direction as enum (
-  'inbound',
-  'outbound'
-);
-
-create type message_direction as enum (
-  'inbound',
-  'outbound'
-);
-
-create type message_status as enum (
-  'queued',
-  'sent',
-  'delivered',
-  'failed'
-);
-
-create type payment_status as enum (
-  'pending',
-  'paid',
-  'failed',
-  'expired',
-  'refunded'
-);
-
-create type outbox_status as enum (
-  'pending',
-  'sent',
-  'failed'
-);
-
--- 3. Core Tables
-
--- Workspaces
+-- 3. Tables
 create table workspaces (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -103,30 +25,13 @@ create table workspaces (
   created_at timestamptz not null default now()
 );
 
--- Roles
-create table roles (
-  id uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null references workspaces(id) on delete cascade,
-  name text not null,
-  unique (workspace_id, name)
-);
-
--- Role Permissions
-create table role_permissions (
-  id uuid primary key default gen_random_uuid(),
-  role_id uuid not null references roles(id) on delete cascade,
-  permission text not null,
-  unique (role_id, permission)
-);
-
--- Profiles
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   workspace_id uuid not null references workspaces(id) on delete cascade,
   email text not null,
   full_name text not null,
   level user_level not null default 'user',
-  role_id uuid null references roles(id) on delete set null,
+  role_id uuid null,
   status user_status not null default 'offline',
   is_active boolean not null default true,
   telegram_chat_id text,
@@ -134,7 +39,24 @@ create table profiles (
   created_at timestamptz not null default now()
 );
 
--- Companies
+create table roles (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  name text not null,
+  unique(workspace_id, name)
+);
+
+create table role_permissions (
+  id uuid primary key default gen_random_uuid(),
+  role_id uuid not null references roles(id) on delete cascade,
+  permission text not null,
+  unique(role_id, permission)
+);
+
+-- add FK from profiles.role_id to roles after roles exists
+alter table profiles add constraint profiles_role_fk
+  foreign key (role_id) references roles(id) on delete set null;
+
 create table companies (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -142,7 +64,6 @@ create table companies (
   created_at timestamptz not null default now()
 );
 
--- Contacts
 create table contacts (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -156,7 +77,6 @@ create table contacts (
   created_at timestamptz not null default now()
 );
 
--- Pipelines
 create table pipelines (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -164,7 +84,6 @@ create table pipelines (
   created_at timestamptz not null default now()
 );
 
--- Stages
 create table stages (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -176,7 +95,6 @@ create table stages (
   required_field_ids uuid[] not null default '{}'
 );
 
--- Opportunities
 create table opportunities (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -192,7 +110,6 @@ create table opportunities (
   updated_at timestamptz not null default now()
 );
 
--- Opportunity Values
 create table opportunity_values (
   opportunity_id uuid primary key references opportunities(id) on delete cascade,
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -200,7 +117,6 @@ create table opportunity_values (
   currency text not null default 'USD'
 );
 
--- Custom Fields
 create table custom_fields (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -213,7 +129,6 @@ create table custom_fields (
   position int not null default 0
 );
 
--- Saved Lists
 create table saved_lists (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -223,7 +138,6 @@ create table saved_lists (
   created_at timestamptz not null default now()
 );
 
--- Leads
 create table leads (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -243,7 +157,6 @@ create table leads (
   created_at timestamptz not null default now()
 );
 
--- Lead Assignments
 create table lead_assignments (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -254,7 +167,6 @@ create table lead_assignments (
   acknowledged_at timestamptz
 );
 
--- Assignment Rules
 create table assignment_rules (
   workspace_id uuid primary key references workspaces(id) on delete cascade,
   round_robin boolean not null default true,
@@ -269,7 +181,6 @@ create table assignment_rules (
   last_rr_user_id uuid null references profiles(id) on delete set null
 );
 
--- Activities
 create table activities (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -281,7 +192,6 @@ create table activities (
   created_at timestamptz not null default now()
 );
 
--- Audit Log
 create table audit_log (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -294,14 +204,12 @@ create table audit_log (
   created_at timestamptz not null default now()
 );
 
--- Dashboard Preferences
 create table dashboard_preferences (
   user_id uuid primary key references profiles(id) on delete cascade,
   workspace_id uuid not null references workspaces(id) on delete cascade,
   hidden_widgets jsonb not null default '[]'
 );
 
--- Integrations
 create table integrations (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -310,10 +218,9 @@ create table integrations (
   config jsonb not null default '{}',
   last_ok_at timestamptz,
   last_error text,
-  unique (workspace_id, provider)
+  unique(workspace_id, provider)
 );
 
--- Integration Events
 create table integration_events (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -324,10 +231,9 @@ create table integration_events (
   reference text,
   error text,
   created_at timestamptz not null default now(),
-  unique (provider, event_id)
+  unique(provider, event_id)
 );
 
--- Messages
 create table messages (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -341,7 +247,6 @@ create table messages (
   created_at timestamptz not null default now()
 );
 
--- Payments
 create table payments (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -355,7 +260,6 @@ create table payments (
   created_at timestamptz not null default now()
 );
 
--- Appointments
 create table appointments (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -369,7 +273,6 @@ create table appointments (
   created_at timestamptz not null default now()
 );
 
--- Notification Outbox
 create table notification_outbox (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
@@ -382,159 +285,81 @@ create table notification_outbox (
   created_at timestamptz not null default now()
 );
 
--- 4. Performance Indexes
-create index idx_profiles_workspace_id on profiles(workspace_id);
+-- 4. Indexes
+create index idx_profiles_ws on profiles(workspace_id);
 create index idx_profiles_email on profiles(email);
-
-create index idx_contacts_workspace_id on contacts(workspace_id);
+create index idx_contacts_ws on contacts(workspace_id);
 create index idx_contacts_phone on contacts(phone);
-create index idx_contacts_workspace_created on contacts(workspace_id, created_at desc);
+create index idx_contacts_ws_created on contacts(workspace_id, created_at desc);
+create index idx_opps_ws on opportunities(workspace_id);
+create index idx_opps_contact on opportunities(contact_id);
+create index idx_opps_stage on opportunities(stage_id);
+create index idx_opps_owner on opportunities(owner_id);
+create index idx_leads_ws_status on leads(workspace_id, status);
+create index idx_leads_ws_deadline on leads(workspace_id, ack_deadline) where status = 'new';
+create index idx_leads_owner on leads(owner_id);
+create index idx_lead_assignments_lead on lead_assignments(lead_id);
+create index idx_activities_entity on activities(workspace_id, entity_type, entity_id, created_at desc);
+create index idx_audit_ws_created on audit_log(workspace_id, created_at desc);
+create index idx_audit_event on audit_log(event_type);
+create index idx_outbox_ws_status on notification_outbox(workspace_id, status);
 
-create index idx_opportunities_workspace_id on opportunities(workspace_id);
-create index idx_opportunities_contact_id on opportunities(contact_id);
-create index idx_opportunities_stage_id on opportunities(stage_id);
-create index idx_opportunities_owner_id on opportunities(owner_id);
-
-create index idx_leads_workspace_status on leads(workspace_id, status);
-create index idx_leads_workspace_ack_deadline on leads(workspace_id, ack_deadline) where status = 'new';
-create index idx_leads_owner_id on leads(owner_id);
-
-create index idx_lead_assignments_lead_id on lead_assignments(lead_id);
-
-create index idx_activities_workspace_entity_created on activities(workspace_id, entity_type, entity_id, created_at desc);
-
-create index idx_audit_log_workspace_created on audit_log(workspace_id, created_at desc);
-create index idx_audit_log_event_type on audit_log(event_type);
-
-create index idx_notification_outbox_workspace_status on notification_outbox(workspace_id, status);
-
--- 5. Helper Functions (SECURITY DEFINER with set search_path = public)
-
-create or replace function current_workspace_id()
-returns uuid
-language sql
-stable
-security definer
-set search_path = public
-as $$
+-- 5. Helper functions
+create or replace function current_workspace_id() returns uuid
+language sql stable security definer set search_path = public as $$
   select workspace_id from profiles where id = auth.uid();
 $$;
 
-create or replace function current_level()
-returns user_level
-language sql
-stable
-security definer
-set search_path = public
-as $$
+create or replace function current_level() returns user_level
+language sql stable security definer set search_path = public as $$
   select level from profiles where id = auth.uid();
 $$;
 
-create or replace function has_permission(perm text)
-returns boolean
-language plpgsql
-stable
-security definer
-set search_path = public
-as $$
+create or replace function has_permission(perm text) returns boolean
+language plpgsql stable security definer set search_path = public as $$
 declare
   v_level user_level;
-  v_role_id uuid;
+  v_role uuid;
+  v_base text[];
 begin
-  if auth.uid() is null then
-    return false;
-  end if;
-
-  select level, role_id into v_level, v_role_id
-  from profiles
-  where id = auth.uid();
-
-  if v_level is null then
-    return false;
-  end if;
-
-  -- Owner level always returns true
-  if v_level = 'owner' then
+  select level, role_id into v_level, v_role from profiles where id = auth.uid();
+  if v_level is null then return false; end if;
+  if v_level = 'owner' then return true; end if;
+  if v_level = 'admin' then return true; end if;
+  v_base := array['crm.view','crm.create','crm.edit'];
+  if perm = any(v_base) then return true; end if;
+  if v_role is not null and exists (select 1 from role_permissions where role_id = v_role and permission = perm) then
     return true;
   end if;
-
-  -- Admin level base default: all permissions granted
-  if v_level = 'admin' then
-    return true;
-  end if;
-
-  -- User level base default: 'crm.view', 'crm.create', 'crm.edit'
-  if v_level = 'user' and perm in ('crm.view', 'crm.create', 'crm.edit') then
-    return true;
-  end if;
-
-  -- Check explicit role permissions for assigned role
-  if v_role_id is not null then
-    if exists (
-      select 1 from role_permissions
-      where role_id = v_role_id and permission = perm
-    ) then
-      return true;
-    end if;
-  end if;
-
   return false;
-end;
-$$;
+end; $$;
 
--- 6. Audit Immutability Protection
-
-create or replace function prevent_audit_modification()
-returns trigger
-language plpgsql
-as $$
+-- 6. Audit immutability
+create or replace function prevent_audit_modification() returns trigger
+language plpgsql as $$
 begin
-  raise exception 'audit_log is append-only and cannot be modified or deleted';
-end;
-$$;
+  raise exception 'audit_log is append-only';
+end; $$;
 
-create trigger trg_audit_log_prevent_modification
+create trigger audit_log_immutable
 before update or delete on audit_log
-for each row
-execute function prevent_audit_modification();
+for each row execute function prevent_audit_modification();
 
--- 7. Helper Security Definer Function: audit_record
-
+-- 7. audit_record
 create or replace function audit_record(
   p_workspace_id uuid,
   p_actor_id uuid,
   p_event_type text,
   p_target_type text,
   p_target_id uuid,
-  p_before jsonb default null,
-  p_after jsonb default null
-)
-returns uuid
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_audit_id uuid;
+  p_before jsonb,
+  p_after jsonb
+) returns uuid
+language plpgsql security definer set search_path = public as $$
+declare v_id uuid;
 begin
-  insert into audit_log (
-    workspace_id,
-    actor_id,
-    event_type,
-    target_type,
-    target_id,
-    before,
-    after
-  ) values (
-    p_workspace_id,
-    p_actor_id,
-    p_event_type,
-    p_target_type,
-    p_target_id,
-    p_before,
-    p_after
-  ) returning id into v_audit_id;
-
-  return v_audit_id;
-end;
-$$;
+  insert into audit_log(workspace_id, actor_id, event_type, target_type, target_id, before, after)
+  values (p_workspace_id, p_actor_id, p_event_type, p_target_type, p_target_id, p_before, p_after)
+  returning id into v_id;
+  return v_id;
+end; $$;
