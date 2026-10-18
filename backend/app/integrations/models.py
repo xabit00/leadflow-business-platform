@@ -85,3 +85,42 @@ class WorkspaceMember(Base):
     )
     role = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
+
+
+class AuditLog(Base):
+    """
+    Immutable audit log entry for tenant and integration actions.
+    Append-only ledger: records who did what, when, and state changes.
+    """
+
+    __tablename__ = "audit_logs"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    workspace_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    actor_id = Column(
+        UUID(as_uuid=True),
+        nullable=True,
+        index=True,
+    )
+    action = Column(String(100), nullable=False, index=True)
+    entity_type = Column(String(50), nullable=False)
+    entity_id = Column(UUID(as_uuid=True), nullable=False)
+    before_state = Column(JSONB, nullable=True)
+    after_state = Column(JSONB, nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        server_default=text("now()"),
+        nullable=False,
+    )
+
