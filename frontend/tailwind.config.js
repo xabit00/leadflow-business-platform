@@ -15,7 +15,10 @@ export default {
           700: '#1d4ed8',
           900: '#1e3a8a',
         }
-      }
+      },
+      fontFamily: {
+        sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],
