@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700">
+  <defs>
+    <circle id="lead" cx="0" cy="0" r="8" fill="#cbd5e1" opacity="0.75"/>
+  </defs>
+  <!-- Leads on the left -->
+  <use href="#lead" x="100" y="120"/>
+  <use href="#lead" x="160" y="320"/>
+  <use href="#lead" x="90" y="520"/>
+  <use href="#lead" x="220" y="180"/>
+  <use href="#lead" x="130" y="620"/>
+  <use href="#lead" x="260" y="420"/>
+  <use href="#lead" x="190" y="260"/>
+  <!-- Flow lines to owner -->
+  <path d="M100 120 Q500 220 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <path d="M160 320 Q550 360 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <path d="M90 520 Q450 460 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <path d="M220 180 Q600 260 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <path d="M130 620 Q500 520 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <path d="M260 420 Q650 390 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <path d="M190 260 Q580 310 800 350" stroke="#64748b" stroke-width="2" fill="none" opacity="0.35"/>
+  <!-- Owner -->
+  <circle cx="800" cy="350" r="26" fill="#ffffff" opacity="0.95"/>
+  <circle cx="800" cy="350" r="18" fill="#3b82f6"/>
+  <!-- Simple person silhouette at owner -->
+  <circle cx="800" cy="310" r="26" fill="#ffffff" opacity="0.92"/>
+  <path d="M770 350 L770 410 L800 432 L830 410 L830 350 Z" fill="#ffffff" opacity="0.92"/>
+</svg>

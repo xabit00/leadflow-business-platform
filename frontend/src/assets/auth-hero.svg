@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700" role="img" aria-label="Leads flowing from multiple sources into a single owner">
+  <defs>
+    <circle id="lead" r="9" fill="#94a3b8" opacity="0.85"/>
+  </defs>
+
+  <!-- Incoming leads (left side, safe margins for any crop) -->
+  <use href="#lead" x="210" y="150"/>
+  <use href="#lead" x="175" y="300"/>
+  <use href="#lead" x="230" y="445"/>
+  <use href="#lead" x="190" y="580"/>
+  <use href="#lead" x="305" y="225"/>
+  <use href="#lead" x="325" y="505"/>
+
+  <!-- Flow lines converging on the owner -->
+  <path d="M210 150 Q480 205 704 332" stroke="#64748b" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M175 300 Q450 315 704 342" stroke="#64748b" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M230 445 Q465 425 704 360" stroke="#64748b" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M190 580 Q470 505 704 372" stroke="#64748b" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M305 225 Q520 258 704 335" stroke="#64748b" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M325 505 Q530 452 704 366" stroke="#64748b" stroke-width="2" fill="none" opacity="0.4"/>
+
+  <!-- Owner: blue node with a clean person glyph (drawn last so line ends are covered) -->
+  <circle cx="740" cy="350" r="46" fill="#3b82f6"/>
+  <circle cx="740" cy="350" r="46" fill="none" stroke="#e2e8f0" stroke-width="2" opacity="0.45"/>
+  <circle cx="740" cy="332" r="14" fill="#ffffff"/>
+  <path d="M712 390 a28 28 0 0 0 56 0 Z" fill="#ffffff"/>
+</svg>
