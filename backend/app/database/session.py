@@ -9,8 +9,6 @@ from app.core.logging import logger
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
     connect_args={"connect_timeout": 1} if "postgresql" in settings.DATABASE_URL else {},
 )
 
