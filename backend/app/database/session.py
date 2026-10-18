@@ -1,5 +1,6 @@
-from typing import Generator
+from typing import Generator, AsyncGenerator
 from sqlalchemy import create_engine, text
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 from app.core.logging import logger
@@ -15,6 +16,26 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# Async SQLAlchemy engine / session (required by the integration layer).
+# DATABASE_URL must use the postgresql+asyncpg:// dialect (asyncpg driver).
+async_database_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+async_engine = create_async_engine(
+    async_database_url,
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20,
+)
+AsyncSessionLocal = async_sessionmaker(
+    async_engine, class_=AsyncSession, expire_on_commit=False
+)
+
+
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    """Async dependency that yields a SQLAlchemy AsyncSession for request lifecycle."""
+    async with AsyncSessionLocal() as session:
+        yield session
 
 
 def get_db() -> Generator[Session, None, None]:
