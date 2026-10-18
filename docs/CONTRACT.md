@@ -18,6 +18,14 @@
 | contact_overview | (p_contact_id uuid) | jsonb | crm.view |
 | get_assignment_rules | () | jsonb | (member of workspace) |
 | set_assignment_rules | (p_rules jsonb) | void | assignment.manage |
+| submit_public_lead | (p_slug text, p_name text, p_phone text, p_email text, p_message text default null) | jsonb {lead_id, status} or {duplicate, lead_id} | anon (no auth) |
+| create_manual_lead | (p_contact_id uuid, p_source lead_source, p_title text default null) | uuid | crm.create |
+| acknowledge_lead | (p_lead_id uuid) | jsonb {lead_id, status, time_to_response_seconds?} | lead.owner or admin/owner |
+| escalate_lead | (p_lead_id uuid) | void | authenticated (for demos) |
+| reassign_lead | (p_lead_id uuid, p_new_user_id uuid) | void | assignment.manage |
+| deactivate_user | (p_user_id uuid) | void | users.manage |
+| recovery_queue | () | setof {lead_id, contact_name, owner_full_name, waiting_seconds, reason} | lead.owner or leads.view_all or assignment.manage |
+| run_escalations | () | int | service_role only |
 
 ## Helper functions
 - current_workspace_id() -> uuid
@@ -39,3 +47,9 @@ workspaces, profiles, roles, role_permissions, companies, contacts, pipelines, s
 
 ## Convention
 Every RPC parameter MUST be prefixed with `p_`. Supabase-js matches args by name.
+
+## Lead Routing & Escalations
+- pg_cron: run_escalations runs every 10 seconds (if pg_cron enabled)
+- Escalation chain: L1 next available → L2 backup → L3+ manager → fallback owner → stays with current
+- Every escalation inserts notification_outbox row for Member 3 to deliver
+- Lead is NEVER ownerless (if escalation exhausts all options, the lead stays with the last owner and gets flagged)
