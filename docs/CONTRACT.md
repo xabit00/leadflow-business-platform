@@ -26,6 +26,11 @@
 | deactivate_user | (p_user_id uuid) | void | users.manage |
 | recovery_queue | () | setof {lead_id, contact_name, owner_full_name, waiting_seconds, reason} | lead.owner or leads.view_all or assignment.manage |
 | run_escalations | () | int | service_role only |
+| get_audit_log | (p_event_type text default null, p_actor_id uuid default null, p_target_type text default null, p_date_from timestamptz default null, p_date_to timestamptz default null, p_limit int default 100, p_offset int default 0) | setof audit rows | audit.view |
+| get_dashboard | () | jsonb (all metrics) | member |
+| dashboard_drilldown | (p_metric text) | jsonb array | member |
+| get_dashboard_preferences | () | jsonb | member |
+| save_dashboard_preferences | (p_hidden jsonb) | void | member |
 
 ## Helper functions
 - current_workspace_id() -> uuid
@@ -53,3 +58,25 @@ Every RPC parameter MUST be prefixed with `p_`. Supabase-js matches args by name
 - Escalation chain: L1 next available → L2 backup → L3+ manager → fallback owner → stays with current
 - Every escalation inserts notification_outbox row for Member 3 to deliver
 - Lead is NEVER ownerless (if escalation exhausts all options, the lead stays with the last owner and gets flagged)
+
+## Service-role-only hooks (Member 3 calls via Edge Functions)
+- record_inbound_message(p_workspace_id, p_contact_id, p_provider_message_id, p_body)
+- update_message_status(p_provider_message_id, p_status, p_failure_reason)
+- record_payment_event(p_workspace_id, p_provider, p_event_id, p_event_type, p_data jsonb)
+- log_integration_event(...)
+- mark_notification_result(p_outbox_id, p_status, p_error)
+- appointment_created_hook(p_workspace_id, p_user_id, p_contact_id, p_opportunity_id, p_title, p_starts_at, p_ends_at)
+
+## Member 3 wiring for notification_outbox
+1. Supabase Dashboard -> Database -> Webhooks -> Create
+2. Table: notification_outbox, Event: INSERT
+3. Type: Supabase Edge Function -> `notify-telegram`
+4. Edge Function receives {record: {...}}, fetches lead + profiles.telegram_chat_id, sends Telegram message
+5. Then calls supabase.rpc('mark_notification_result', { p_outbox_id, p_status:'sent' }) via service_role
+
+## HOW TO APPLY (end to end)
+1. Supabase Dashboard -> SQL Editor -> run 0001..0006 in order
+2. Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY env vars
+3. npx tsx supabase/seed/seed.ts
+4. npx supabase gen types typescript --project-id svyqunrdgbgxxgmeerba > frontend/src/types/database.ts
+5. Frontend signup -> bootstrap_workspace -> get_my_profile
