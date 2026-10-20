@@ -12,12 +12,11 @@ const throwIfError = (error: { message: string } | null) => {
 export interface AssignmentRulesInput {
   ack_leave_policy: 'keep' | 'reassign';
   ack_window_seconds: number;
-  backup_user_id: string | null;
+  backup_user_id?: string | null;
   escalation_levels: number;
   idle_period_seconds: number;
-  last_rr_user_id: string | null;
   level_window_seconds: number;
-  manager_user_id: string | null;
+  manager_user_id?: string | null;
   max_open_leads: number;
   round_robin: boolean;
 }
@@ -29,7 +28,7 @@ export const getAssignmentRules = async (): Promise<AssignmentRule | null> => {
 };
 
 export const setAssignmentRules = async (rules: AssignmentRulesInput) => {
-  const { error } = await supabase.rpc('set_assignment_rules', { p_rules: rules as any });
+  const { error } = await supabase.rpc('set_assignment_rules', { p_rules: { ...rules } });
   throwIfError(error);
 };
 

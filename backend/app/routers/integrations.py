@@ -116,16 +116,6 @@ async def stripe_webhook(
 
     result = await process_stripe_webhook(request, payload, stripe_signature, db)
 
-    if result.get("duplicate"):
-        return WebhookEventResponse(
-            id=result["event_id"],  # placeholder id; duplicate events carry no new row
-            provider="stripe",
-            event_id=result["event_id"],
-            event_type="duplicate",
-            status="succeeded",
-            received_at=datetime.now(timezone.utc),
-        )
-
     # Fetch the recorded event to return a consistent response.
     stmt = select(WebhookEvent).where(
         WebhookEvent.provider == "stripe",

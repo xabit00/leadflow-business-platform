@@ -2,6 +2,28 @@
 
 LeadFlow is an enterprise-grade multi-tenant CRM and operational business management platform engineered for sales, support, and field teams. The platform unifies lead intake, automated round-robin routing, SLA-based escalation, omni-channel customer messaging, secure payment generation, calendar integrations, and real-time operational analytics into a streamlined interface.
 
+
+> **Current implementation:** Login, workspace profiles, CRM and lead rules use
+> Supabase directly from the frontend. The FastAPI service contains health and
+> partial integration endpoints; it does not provide the frontend's auth/CRM APIs.
+> The older architecture and local PostgreSQL instructions below describe the
+> FastAPI scaffold, not a complete setup for the current frontend.
+>
+> For the current frontend, copy `frontend/.env.example` to `frontend/.env`, set
+> `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your project's public values,
+> and apply `supabase/migrations/0001_schema.sql` through `0005_lead_engine.sql`
+> in order to a **new Supabase project**. Do not apply these initial migrations
+> again to an existing database. Restart Vite after editing environment variables.
+> Never put service-role or secret keys in `VITE_` variables.
+>
+> `VITE_USE_MOCKS=true` enables demo authentication, but CRM and lead screens still
+> call Supabase. It is not a fully offline demo.
+>
+> Integration work remains: Stripe currently records webhook events but does not
+> persist checkout payments; the FastAPI integration models/queries and auth must
+> be reconciled with the Supabase schema before end-to-end use. A passing build
+> or health endpoint does not mean these integrations are complete.
+
 ---
 
 ## 1. Project Overview
