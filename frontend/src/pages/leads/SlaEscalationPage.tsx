@@ -82,8 +82,9 @@ export const SlaEscalationPage = () => {
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300">Ack leave policy</label>
+                <label htmlFor="ack-leave-policy" className="text-xs font-medium text-slate-300">Acknowledged leads on absence</label>
                 <select
+                  id="ack-leave-policy"
                   value={form.ack_leave_policy}
                   onChange={(event) => setForm({ ...form, ack_leave_policy: event.target.value as 'keep' | 'reassign' })}
                   disabled={disabled}

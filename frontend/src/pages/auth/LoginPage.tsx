@@ -6,6 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { normalizeError } from '../../api/errors';
+import { isMockMode } from '../../lib/supabase';
 import { DEMO_EMAIL, DEMO_PASSWORD } from '../../api/mockAuth';
 import { AuthLayout } from '../../components/layout/AuthLayout';
 
@@ -76,6 +77,7 @@ export const LoginPage: React.FC = () => {
         <div className="relative fade-in" style={{ animationDelay: '120ms' }}>
           <Input
             label="Password"
+            className="pr-12"
             type={showPassword ? 'text' : 'password'}
             required
             autoComplete="current-password"
@@ -88,7 +90,7 @@ export const LoginPage: React.FC = () => {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             aria-label={showPassword ? 'Hide password' : 'Show password'}
-            className="absolute right-2.5 top-14 h-8 w-8 items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none"
+            className="absolute right-2 top-7 flex h-9 w-9 items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none"
             disabled={loading}
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -116,16 +118,16 @@ export const LoginPage: React.FC = () => {
           )}
         </Button>
 
-        <div className="mt-6 pt-4 border-t border-slate-800/80 fade-in" style={{ animationDelay: '240ms' }}>
+        {isMockMode && <div className="mt-6 pt-4 border-t border-slate-800/80 fade-in" style={{ animationDelay: '240ms' }}>
           <button
             type="button"
             onClick={fillDemoCredentials}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-blue-300 bg-blue-950/40 hover:bg-blue-900/40 border border-blue-800/50 rounded-lg transition-colors duration-150"
             disabled={loading}
           >
-            Use Prebuilt Owner Credentials
+            Use demo credentials
           </button>
-        </div>
+        </div>}
       </form>
 
       <p className="mt-8 text-center text-xs text-slate-400 fade-in" style={{ animationDelay: '300ms' }}>

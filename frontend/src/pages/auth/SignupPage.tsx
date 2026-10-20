@@ -117,6 +117,7 @@ export const SignupPage: React.FC = () => {
           <div className="relative fade-in" style={{ animationDelay: '240ms' }}>
             <Input
               label="Password"
+              className="pr-12"
               type={showPassword ? 'text' : 'password'}
               required
               minLength={8}
@@ -130,7 +131,7 @@ export const SignupPage: React.FC = () => {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2.5 top-16 h-8 w-8 items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none"
+              className="absolute right-2 top-7 flex h-9 w-9 items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800 rounded transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none"
               disabled={loading}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

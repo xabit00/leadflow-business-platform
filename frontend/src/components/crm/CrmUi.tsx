@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { CustomField } from '../../api/crm';
@@ -9,8 +9,8 @@ export const selectClass = 'w-full rounded-lg border border-slate-700 bg-slate-9
 export const PageHeader = ({ title, description, action }: { title: string; description: string; action?: ReactNode }) => (
   <header className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
     <div>
-      <h1 className='text-2xl font-semibold tracking-tight text-white'>{title}</h1>
-      <p className='mt-1 text-sm text-slate-400'>{description}</p>
+      <h1 className='text-3xl font-semibold tracking-tight text-white'>{title}</h1>
+      <p className='mt-2 max-w-2xl text-sm text-slate-400'>{description}</p>
     </div>
     {action}
   </header>
@@ -39,23 +39,23 @@ export const Pagination = ({ page, count, pageSize, onChange }: { page: number; 
 };
 
 export const Drawer = ({ title, open, onClose, children }: { title: string; open: boolean; onClose: () => void; children: ReactNode }) => {
+  const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (!open) return;
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', close);
-    return () => document.removeEventListener('keydown', close);
-  }, [onClose, open]);
-  if (!open) return null;
+    const panel = dialog.current;
+    if (!panel) return;
+    if (open && !panel.open) panel.showModal();
+    if (!open && panel.open) panel.close();
+  }, [open]);
   return (
-    <div className='fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm' role='presentation' onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-      <aside className='ml-auto flex h-full w-full max-w-lg flex-col border-l border-slate-800 bg-slate-900 shadow-2xl' role='dialog' aria-modal='true' aria-labelledby='crm-drawer-title'>
-        <div className='flex items-center justify-between border-b border-slate-800 px-5 py-4'>
-          <h2 id='crm-drawer-title' className='text-lg font-semibold text-white'>{title}</h2>
-          <button type='button' onClick={onClose} className='rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500' aria-label='Close panel'><X className='h-5 w-5' /></button>
+    <dialog ref={dialog} className="crm-dialog" aria-labelledby="crm-drawer-title" onCancel={onClose} onClose={onClose} onClick={(event) => { if (event.currentTarget === event.target) onClose(); }}>
+      <div className="flex min-h-full flex-col bg-slate-900">
+        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
+          <h2 id="crm-drawer-title" className="text-lg font-semibold text-white">{title}</h2>
+          <button type="button" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 hover:bg-slate-800" aria-label="Close panel"><X className="h-5 w-5" /></button>
         </div>
-        <div className='flex-1 overflow-y-auto p-5'>{children}</div>
-      </aside>
-    </div>
+        <div className="flex-1 p-6">{children}</div>
+      </div>
+    </dialog>
   );
 };
 

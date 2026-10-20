@@ -1,19 +1,22 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Phone, Mail, MessageCircle, UserPlus, Loader2 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Phone, Mail, MessageCircle, Loader2 } from 'lucide-react';
+import { getCrmOptions } from '../../api/crm';
 import { createManualLead } from '../../api/leads';
 import { normalizeError } from '../../api/errors';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { PageHeader } from '../../components/crm/CrmUi';
+import { PageHeader, selectClass } from '../../components/crm/CrmUi';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 
 export const LeadIntakePage = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, profile } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
   const canCreate = hasPermission('crm.create');
+
+  const contacts = useQuery({ queryKey: ['crm-options', profile?.workspace_id], queryFn: () => getCrmOptions(profile!.workspace_id), enabled: Boolean(profile) });
 
   const [source, setSource] = useState<'web_form' | 'message' | 'manual'>('manual');
   const [form, setForm] = useState({ contactId: '', title: '' });
@@ -33,13 +36,7 @@ export const LeadIntakePage = () => {
       <PageHeader
         title="Lead Intake"
         description="Create manual leads from inbound sources and assign them to your team."
-        action={
-          canCreate ? (
-            <Button onClick={() => {}} variant="outline" disabled>
-              <UserPlus className="h-4 w-4" /> New lead
-            </Button>
-          ) : undefined
-        }
+
       />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
@@ -52,13 +49,14 @@ export const LeadIntakePage = () => {
               }}
               className="space-y-4"
             >
-              <Input
-                label="Contact"
-                placeholder="Select or search a contact"
-                value={form.contactId}
-                onChange={(event) => setForm({ ...form, contactId: event.target.value })}
-                disabled={mutation.isPending}
-              />
+              <label className="block space-y-2 text-xs font-medium text-slate-300">Contact
+                <select className={selectClass} required value={form.contactId} onChange={(event) => setForm({ ...form, contactId: event.target.value })} disabled={mutation.isPending || !canCreate || contacts.isPending}>
+                  <option value="">{contacts.isPending ? 'Loading contacts…' : 'Choose a contact'}</option>
+                  {contacts.data?.contacts.map(contact => <option value={contact.id} key={contact.id}>{contact.name}{contact.email ? ` · ${contact.email}` : ''}</option>)}
+                </select>
+              </label>
+              {contacts.isError && <p role="alert" className="text-sm text-red-300">Could not load contacts. <button type="button" className="underline" onClick={() => void contacts.refetch()}>Retry</button></p>}
+              {contacts.isSuccess && !contacts.data.contacts.length && <p className="text-sm text-slate-400">Create a contact in the Contacts screen first.</p>}
               <Input
                 label="Title (optional)"
                 placeholder="e.g. Website inquiry"
@@ -66,7 +64,7 @@ export const LeadIntakePage = () => {
                 onChange={(event) => setForm({ ...form, title: event.target.value })}
                 disabled={mutation.isPending}
               />
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                 <span>Source:</span>
                 {['web_form', 'message', 'manual'].map((s) => (
                   <label key={s} className="inline-flex items-center gap-2 cursor-pointer">
@@ -81,7 +79,7 @@ export const LeadIntakePage = () => {
                   </label>
                 ))}
               </div>
-              <Button type="submit" disabled={!form.contactId || mutation.isPending}>
+              <Button type="submit" disabled={!canCreate || !form.contactId || mutation.isPending}>
                 {mutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Create lead
               </Button>
