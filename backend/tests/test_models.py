@@ -1,4 +1,5 @@
 import app.models
+import app.integrations.models
 from app.database.base import Base
 
 
@@ -8,6 +9,7 @@ EXPECTED_TABLES = {
     'leads', 'lead_assignments', 'lead_escalations', 'activities', 'audit_events',
     'conversations', 'messages', 'payments', 'appointments',
     'integration_connections', 'integration_events',
+    'workspace_members', 'webhook_events',
 }
 
 

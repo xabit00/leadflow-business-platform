@@ -2,13 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Clock, User, AlertCircle } from 'lucide-react';
 import { recoveryQueue } from '../../api/leads';
 import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../hooks/useToast';
 import { PageHeader } from '../../components/crm/CrmUi';
 import { Button } from '../../components/ui/Button';
 
 export const RecoveryQueuePage = () => {
   const { profile } = useAuth();
-  const toast = useToast();
 
   const query = useQuery({
     queryKey: ['recovery-queue', profile?.workspace_id],
@@ -37,11 +35,9 @@ export const RecoveryQueuePage = () => {
         description="Leads that need attention: overdue acknowledgements, repeated escalations, or idle owners."
         action={
           <Button
-            onClick={() => {
-              toast.info('Recovery actions require assignment.manage permission.');
-            }}
+            onClick={() => void query.refetch()}
             variant="outline"
-            disabled
+            disabled={query.isFetching}
           >
             <Clock className="h-4 w-4" /> Refresh queue
           </Button>
@@ -65,7 +61,7 @@ export const RecoveryQueuePage = () => {
             <p className="text-xs text-slate-400">No leads require recovery at this time.</p>
           </div>
         ) : (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="text-left border-b border-slate-800 bg-slate-950/50">

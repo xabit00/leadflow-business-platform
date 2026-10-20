@@ -32,7 +32,7 @@ async def process_stripe_webhook(
     Verify a Stripe webhook signature and idempotently record/process the event.
 
     Idempotency rules (webhook_events ledger, unique on provider+event_id):
-      - existing status == 'succeeded'  -> return immediately (duplicate, 200).
+      - existing status == 'processed'  -> return immediately (duplicate, 200).
       - existing status == 'failed'     -> reset to 'processing' and reprocess.
       - not found                       -> insert as 'processing' and process.
 
@@ -65,7 +65,7 @@ async def process_stripe_webhook(
     existing: WebhookEvent | None = result.scalar_one_or_none()
 
     if existing is not None:
-        if existing.status == "succeeded":
+        if existing.status == "processed":
             # Already fully processed -> duplicate delivery, ignore.
             return {"received": True, "duplicate": True, "event_id": event_id}
         if existing.status == "failed":
